@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kleiderbügel &amp; Kasse – Vintage Reselling Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#EDE4D3; --ink:#2B2420; --muted:#6B5F52; --muted2:#8A7A63;
+    --card:#F7F1E3; --line:#B9A582;
+    --blue:#3D5A6C; --olive:#5C6B3E; --wine:#7A2E2E; --gold:#C08A28; --brown:#8A5A3C; --plum:#6B4E71; --grey:#9A8B6F;
+    --good:#4A5731; --bad:#7A2E2E;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;}
+  .font-display{font-family:'Fraunces',serif;}
+  .font-mono{font-family:'IBM Plex Mono',monospace;}
+  header{padding:32px 20px 20px;}
+  @media(min-width:640px){header{padding:32px 40px 20px;}}
+  .header-row{display:flex;align-items:center;gap:12px;}
+  .logo{width:40px;height:40px;border-radius:50%;background:var(--wine);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  h1{font-size:26px;margin:0;}
+  .subtitle{margin:2px 0 0;color:var(--muted);font-size:14px;}
+  main{max-width:1100px;margin:0 auto;padding:0 20px 64px;}
+  @media(min-width:640px){main{padding:0 40px 64px;}}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:32px;}
+  @media(min-width:800px){.kpi-row{grid-template-columns:repeat(5,1fr);}}
+
+  .tag-card{position:relative;background:var(--card);border:1px solid var(--line);box-shadow:2px 3px 0 rgba(43,36,32,0.08);border-radius:8px;transition:transform .15s ease;}
+  .tag-card:hover{transform:rotate(-.4deg) translateY(-1px);}
+  .tag-hole{position:absolute;top:-4px;left:-4px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:1px solid var(--line);}
+  .dashed{border-top:1.5px dashed var(--line);margin:8px 0;}
+
+  .kpi{padding:12px 16px;}
+  .kpi .label{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:4px;}
+  .kpi .value{font-family:'IBM Plex Mono',monospace;font-size:18px;}
+
+  .layout{display:grid;grid-template-columns:1fr;gap:24px;}
+  @media(min-width:1024px){.layout{grid-template-columns:2fr 3fr;}}
+
+  .form-card{padding:20px;}
+  .form-card h2{margin:0 0 16px;font-size:18px;}
+  form{display:flex;flex-direction:column;gap:12px;font-size:14px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  label{display:block;margin-bottom:4px;color:var(--muted);font-size:13px;}
+  input,select{width:100%;border-radius:6px;padding:8px 10px;background:rgba(255,255,255,.6);border:1px solid var(--line);outline:none;font-family:inherit;font-size:14px;color:var(--ink);}
+  input:focus,select:focus{border-color:var(--brown);}
+  .btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:6px;padding:10px;font-weight:500;border:none;cursor:pointer;background:var(--ink);color:var(--card);font-family:inherit;font-size:14px;}
+  .btn:hover{opacity:.92;}
+  .hint{font-size:12px;color:var(--muted2);margin:0;}
+  .error-msg{font-size:12px;color:var(--wine);}
+  .preview{border-radius:6px;padding:8px 12px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+
+  .charts{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:640px){.charts{grid-template-columns:1fr 1fr;}}
+  .chart-card{padding:16px;}
+  .chart-card h3{margin:0 0 8px;font-size:15px;}
+  .legend-row{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:4px;}
+  .legend-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
+  .empty-note{font-size:12px;color:var(--muted2);}
+
+  .inv-title{font-size:20px;margin:40px 0 16px;}
+  .inv-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+  @media(min-width:640px){.inv-grid{grid-template-columns:1fr 1fr;}}
+  @media(min-width:1024px){.inv-grid{grid-template-columns:1fr 1fr 1fr;}}
+  .empty-box{padding:24px;text-align:center;font-size:14px;color:var(--muted2);}
+
+  .item-card{padding:16px;}
+  .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:16px;margin-bottom:4px;}
+  .item-cat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+  .item-name{font-family:'Fraunces',serif;font-size:16px;margin:0 0 2px;padding-right:16px;}
+  .item-sub{font-size:12px;color:var(--muted2);margin:0 0 8px;}
+  .del-btn{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;opacity:.5;color:var(--ink);}
+  .del-btn:hover{opacity:1;}
+  .kv{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:1px 0;}
+  .kv .m{color:var(--muted2);}
+  .kv.profit-pos{color:var(--good);font-weight:500;}
+  .kv.profit-neg{color:var(--bad);font-weight:500;}
+  .sell-box{display:flex;flex-direction:column;gap:6px;padding-top:4px;}
+  .sell-inputs{display:flex;gap:8px;}
+  .sell-inputs input{padding:6px 8px;font-size:13px;}
+  .stars{display:flex;gap:1px;}
+  .stars button{background:none;border:none;cursor:pointer;padding:0;line-height:0;}
+  .complete-btn{display:flex;align-items:center;gap:8px;font-size:12px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit;}
+  .saving-note{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--brown);margin-top:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-row">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F7F1E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59a2 2 0 0 0 .59 1.41l9.58 9.59a2 2 0 0 0 2.82 0l4.6-4.6a2 2 0 0 0 0-2.82Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+    </div>
+    <div>
+      <h1 class="font-display">Kleiderbügel &amp; Kasse</h1>
+      <p class="subtitle">Vintage-Inventar, Preise &amp; Kapital auf einen Blick</p>
+    </div>
+  </div>
+  <div id="savingNote" class="saving-note" style="display:none;">gespeichert ✓</div>
+</header>
+
+<main>
+  <section class="kpi-row" id="kpiRow"></section>
+
+  <div class="layout">
+    <section class="tag-card form-card">
+      <div class="tag-hole"></div>
+      <h2 class="font-display">Neues Teil eintragen</h2>
+      <form id="addForm">
+        <div>
+          <label>Artikelname</label>
+          <input id="f-name" placeholder="z.B. Levi's Trucker Jacke 90s" />
+        </div>
+        <div class="row2">
+          <div>
+            <label>Marke</label>
+            <input id="f-brand" placeholder="z.B. Levi's" />
+          </div>
+          <div>
+            <label>Größe</label>
+            <input id="f-size" placeholder="z.B. M / 42 / W32L34" />
+          </div>
+        </div>
+        <div class="row2">
+          <div>
+            <label>Kategorie</label>
+            <select id="f-category"></select>
+          </div>
+          <div>
+            <label>Für</label>
+            <select id="f-gender"></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div>
+            <label>Einkaufspreis (€)</label>
+            <input id="f-buy" inputmode="decimal" placeholder="z.B. 8" />
+          </div>
+          <div>
+            <label>Einkaufsdatum</label>
+            <input id="f-pdate" type="date" />
+          </div>
+        </div>
+        <div>
+          <label>Verkaufspreis (€, optional)</label>
+          <input id="f-sell" inputmode="decimal" placeholder="optional" />
+        </div>
+        <div id="livePreview"></div>
+        <div id="formError" class="error-msg"></div>
+        <button type="submit" class="btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Eintragen
+        </button>
+        <p class="hint">Ohne Verkaufspreis landet das Teil im Lagerbestand. Trag den Verkaufspreis später nach, sobald es verkauft ist.</p>
+      </form>
+    </section>
+
+    <section class="charts">
+      <div class="tag-card chart-card">
+        <h3 class="font-display">Lagerbestand nach Kategorie</h3>
+        <canvas id="chartBestand" height="200"></canvas>
+        <div id="legendBestand"></div>
+      </div>
+      <div class="tag-card chart-card">
+        <h3 class="font-display">Kapitalverteilung im Lager</h3>
+        <canvas id="chartKapital" height="200"></canvas>
+        <div id="legendKapital"></div>
+      </div>
+    </section>
+  </div>
+
+  <h2 class="inv-title font-display">Bestand &amp; Verkäufe</h2>
+  <div id="invGrid" class="inv-grid"></div>
+</main>
+
+<script>
+const CATEGORIES = [
+  { key:"jacken", label:"Jacken", color:"#3D5A6C" },
+  { key:"hosen", label:"Hosen", color:"#5C6B3E" },
+  { key:"kleider", label:"Kleider", color:"#7A2E2E" },
+  { key:"shirts", label:"Shirts / Tops", color:"#C08A28" },
+  { key:"schuhe", label:"Schuhe", color:"#8A5A3C" },
+  { key:"accessoires", label:"Accessoires", color:"#6B4E71" },
+  { key:"sonstiges", label:"Sonstiges", color:"#9A8B6F" },
+];
+const GENDERS = [
+  { key:"damen", label:"Damen" },
+  { key:"herren", label:"Herren" },
+  { key:"unisex", label:"Unisex" },
+];
+const catInfo = k => CATEGORIES.find(c=>c.key===k) || CATEGORIES[CATEGORIES.length-1];
+const genderLabel = k => (GENDERS.find(g=>g.key===k) || GENDERS[2]).label;
+const fmt = n => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(Number.isFinite(n)?n:0);
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => d ? new Date(d).toLocaleDateString('de-DE') : '—';
+const STORAGE_KEY = 'vintage-inventory-items';
+
+function loadItems(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function saveItems(items){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    const note = document.getElementById('savingNote');
+    note.style.display = 'block';
+    clearTimeout(saveItems._t);
+    saveItems._t = setTimeout(()=>{ note.style.display='none'; }, 1200);
+  }catch(e){ console.error('Speichern fehlgeschlagen', e); }
+}
+
+let items = loadItems();
+let bestandChart, kapitalChart;
+
+function computeStats(){
+  const stock = items.filter(i=>!i.sold);
+  const sold = items.filter(i=>i.sold);
+  const kapitalImLager = stock.reduce((s,i)=>s+i.buyPrice,0);
+  const umsatz = sold.reduce((s,i)=>s+(i.sellPrice||0),0);
+  const gewinn = sold.reduce((s,i)=>s+((i.sellPrice||0)-i.buyPrice),0);
+  const margins = sold.filter(i=>i.sellPrice>0).map(i=>((i.sellPrice-i.buyPrice)/i.sellPrice)*100);
+  const durchschnMarge = margins.length ? margins.reduce((s,m)=>s+m,0)/margins.length : 0;
+
+  const bestandMap = {}; stock.forEach(i=>{ bestandMap[i.category]=(bestandMap[i.category]||0)+1; });
+  const kapitalMap = {}; stock.forEach(i=>{ kapitalMap[i.category]=(kapitalMap[i.category]||0)+i.buyPrice; });
+
+  const bestandNachKategorie = Object.entries(bestandMap).map(([key,value])=>({key,name:catInfo(key).label,value,color:catInfo(key).color}));
+  const kapitalNachKategorie = Object.entries(kapitalMap).map(([key,value])=>({key,name:catInfo(key).label,value:Math.round(value*100)/100,color:catInfo(key).color}));
+
+  return {stock, sold, kapitalImLager, umsatz, gewinn, durchschnMarge, bestandNachKategorie, kapitalNachKategorie};
+}
+
+function iconSvg(name){
+  const icons = {
+    package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+    layers:'<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+    dollar:'<circle cx="12" cy="12" r="10"/><path d="M16 8H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H8"/><path d="M12 6v2"/><path d="M12 16v2"/>',
+    trend:'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+    x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    check:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/>',
+    square:'<rect width="18" height="18" x="3" y="3" rx="2"/>',
+  };
+  return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[name]||''}</svg>`;
+}
+
+function renderKpis(stats){
+  const el = document.getElementById('kpiRow');
+  const tiles = [
+    {icon:'package', color:'#3D5A6C', label:'Im Lager', value:stats.stock.length},
+    {icon:'layers', color:'#C08A28', label:'Kapital im Lager', value:fmt(stats.kapitalImLager)},
+    {icon:'dollar', color:'#5C6B3E', label:'Umsatz (verkauft)', value:fmt(stats.umsatz)},
+    {icon:'trend', color:'#7A2E2E', label:'Gewinn gesamt', value:fmt(stats.gewinn)},
+    {icon:'trend', color:'#6B4E71', label:'Ø Marge', value:stats.durchschnMarge.toFixed(1)+'%'},
+  ];
+  el.innerHTML = tiles.map(t=>`
+    <div class="tag-card kpi">
+      <div class="label" style="color:${t.color}">${iconSvg(t.icon)} ${t.label}</div>
+      <div class="value">${t.value}</div>
+    </div>`).join('');
+}
+
+function renderLegend(elId, data, isCurrency, suffix){
+  const el = document.getElementById(elId);
+  const total = data.reduce((s,d)=>s+d.value,0);
+  if(data.length===0){ el.innerHTML = '<p class="empty-note">Noch keine Daten im Lager.</p>'; return; }
+  el.innerHTML = data.map(d=>`
+    <div class="legend-row">
+      <span><span class="legend-dot" style="background:${d.color}"></span>${d.name}</span>
+      <span>${isCurrency?fmt(d.value):(d.value+suffix)} ${total>0?`<span style="color:var(--muted2)"> · ${Math.round(d.value/total*100)}%</span>`:''}</span>
+    </div>`).join('');
+}
+
+function renderCharts(stats){
+  const ctx1 = document.getElementById('chartBestand').getContext('2d');
+  const ctx2 = document.getElementById('chartKapital').getContext('2d');
+  const b = stats.bestandNachKategorie;
+  const k = stats.kapitalNachKategorie;
+
+  if(bestandChart) bestandChart.destroy();
+  if(kapitalChart) kapitalChart.destroy();
+
+  bestandChart = new Chart(ctx1, {
+    type:'doughnut',
+    data:{ labels:b.map(d=>d.name), datasets:[{ data:b.map(d=>d.value), backgroundColor:b.map(d=>d.color), borderColor:'#F7F1E3', borderWidth:2 }] },
+    options:{ plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>`${c.label}: ${c.parsed} Stk.` } } }, cutout:'55%' }
+  });
+  kapitalChart = new Chart(ctx2, {
+    type:'doughnut',
+    data:{ labels:k.map(d=>d.name), datasets:[{ data:k.map(d=>d.value), backgroundColor:k.map(d=>d.color), borderColor:'#F7F1E3', borderWidth:2 }] },
+    options:{ plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>`${c.label}: ${fmt(c.parsed)}` } } }, cutout:'55%' }
+  });
+
+  renderLegend('legendBestand', b, false, ' Stk.');
+  renderLegend('legendKapital', k, true, '');
+}
+
+function starsHtml(itemId, rating){
+  let html = '<div class="stars">';
+  for(let n=1;n<=5;n++){
+    const filled = n <= (rating||0);
+    html += `<button type="button" data-star="${n}" data-item="${itemId}" aria-label="${n} Sterne">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="${filled?'#C08A28':'none'}" stroke="${filled?'#C08A28':'#B9A582'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+      </svg>
+    </button>`;
+  }
+  return html + '</div>';
+}
+
+function renderInventory(){
+  const el = document.getElementById('invGrid');
+  if(items.length===0){
+    el.innerHTML = '<div class="tag-card empty-box">Noch nichts eingetragen. Füge oben dein erstes Teil hinzu.</div>';
+    return;
+  }
+  el.innerHTML = items.map(item=>{
+    const info = catInfo(item.category);
+    const profit = item.sold ? item.sellPrice - item.buyPrice : null;
+    const margin = item.sold && item.sellPrice>0 ? (profit/item.sellPrice)*100 : null;
+    const subline = [item.brand, item.size ? `Gr. ${item.size}` : ''].filter(Boolean).join(' · ') || '—';
+
+    return `
+    <div class="tag-card item-card" data-card="${item.id}">
+      <div class="tag-hole"></div>
+      <button class="del-btn" data-delete="${item.id}" aria-label="Löschen">${iconSvg('x')}</button>
+      <div class="item-top">
+        <div class="item-cat"><span class="legend-dot" style="background:${info.color}"></span>${info.label} · ${genderLabel(item.gender)}</div>
+        ${starsHtml(item.id, item.rating)}
+      </div>
+      <h3 class="item-name font-display">${escapeHtml(item.name)}</h3>
+      <p class="item-sub">${escapeHtml(subline)}</p>
+      <div class="dashed"></div>
+      <div class="kv"><span class="m">Einkauf</span><span>${fmt(item.buyPrice)}</span></div>
+      <div class="kv"><span class="m">Eingekauft am</span><span>${fmtDate(item.purchaseDate)}</span></div>
+      ${item.sold ? `
+        <div class="kv"><span class="m">Verkauf</span><span>${fmt(item.sellPrice)}</span></div>
+        <div class="kv"><span class="m">Verkauft am</span><span>${fmtDate(item.saleDate)}</span></div>
+        <div class="kv ${profit>=0?'profit-pos':'profit-neg'}"><span>Gewinn</span><span>${fmt(profit)} ${margin!==null?`(${margin.toFixed(0)}%)`:''}</span></div>
+      ` : `
+        <div class="sell-box">
+          <div class="sell-inputs">
+            <input type="text" inputmode="decimal" placeholder="Verkaufspreis" id="sellPrice-${item.id}" />
+            <input type="date" value="${today()}" id="sellDate-${item.id}" />
+          </div>
+          <button class="btn" data-sell="${item.id}">Als verkauft markieren</button>
+        </div>
+      `}
+      <div class="dashed"></div>
+      <button class="complete-btn" data-complete="${item.id}" style="color:${item.completed?'var(--good)':'var(--muted)'}">
+        ${iconSvg(item.completed?'check':'square')} Bestellung abgeschlossen
+      </button>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click', ()=>{
+    items = items.filter(i=>i.id!==b.dataset.delete);
+    saveItems(items); renderAll();
+  }));
+  el.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.item; const n = parseInt(b.dataset.star,10);
+    items = items.map(i=> i.id===id ? {...i, rating: (i.rating===n? 0 : n)} : i);
+    saveItems(items); renderAll();
+  }));
+  el.querySelectorAll('[data-complete]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.complete;
+    items = items.map(i=> i.id===id ? {...i, completed: !i.completed} : i);
+    saveItems(items); renderAll();
+  }));
+  el.querySelectorAll('[data-sell]').forEach(b=>b.addEventListener('click', ()=>{
+    const id = b.dataset.sell;
+    const priceInput = document.getElementById(`sellPrice-${id}`);
+    const dateInput = document.getElementById(`sellDate-${id}`);
+    const parsed = parseFloat((priceInput.value||'').replace(',','.'));
+    if(!Number.isFinite(parsed) || parsed<0) { priceInput.focus(); return; }
+    items = items.map(i=> i.id===id ? {...i, sellPrice:parsed, sold:true, saleDate: dateInput.value || today()} : i);
+    saveItems(items); renderAll();
+  }));
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderAll(){
+  const stats = computeStats();
+  renderKpis(stats);
+  renderCharts(stats);
+  renderInventory();
+}
+
+function initFormOptions(){
+  const catSel = document.getElementById('f-category');
+  catSel.innerHTML = CATEGORIES.map(c=>`<option value="${c.key}">${c.label}</option>`).join('');
+  const genSel = document.getElementById('f-gender');
+  genSel.innerHTML = GENDERS.map(g=>`<option value="${g.key}">${g.label}</option>`).join('');
+  document.getElementById('f-pdate').value = today();
+}
+
+function updateLivePreview(){
+  const bp = parseFloat((document.getElementById('f-buy').value||'').replace(',','.'));
+  const sp = parseFloat((document.getElementById('f-sell').value||'').replace(',','.'));
+  const el = document.getElementById('livePreview');
+  if(!Number.isFinite(bp) || !Number.isFinite(sp)){ el.innerHTML=''; return; }
+  const profit = sp - bp;
+  const margin = sp>0 ? (profit/sp)*100 : 0;
+  const positive = profit>=0;
+  el.innerHTML = `<div class="preview" style="background:${positive?'rgba(92,107,62,0.12)':'rgba(122,46,46,0.12)'};color:${positive?'#4A5731':'#7A2E2E'}">
+    <span>Gewinn: ${fmt(profit)}</span><span>Marge: ${margin.toFixed(0)}%</span>
+  </div>`;
+}
+
+document.getElementById('f-buy').addEventListener('input', updateLivePreview);
+document.getElementById('f-sell').addEventListener('input', updateLivePreview);
+
+document.getElementById('addForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const errEl = document.getElementById('formError');
+  errEl.textContent = '';
+  const name = document.getElementById('f-name').value.trim();
+  const bp = parseFloat((document.getElementById('f-buy').value||'').replace(',','.'));
+  if(!name){ errEl.textContent = 'Bitte einen Namen eintragen.'; return; }
+  if(!Number.isFinite(bp) || bp<0){ errEl.textContent = 'Einkaufspreis ist ungültig.'; return; }
+  let sp = null;
+  const sellRaw = document.getElementById('f-sell').value;
+  if(sellRaw !== ''){
+    const parsed = parseFloat(sellRaw.replace(',','.'));
+    if(!Number.isFinite(parsed) || parsed<0){ errEl.textContent = 'Verkaufspreis ist ungültig.'; return; }
+    sp = parsed;
+  }
+  const pdate = document.getElementById('f-pdate').value || today();
+  const newItem = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    name,
+    brand: document.getElementById('f-brand').value.trim(),
+    size: document.getElementById('f-size').value.trim(),
+    gender: document.getElementById('f-gender').value,
+    category: document.getElementById('f-category').value,
+    buyPrice: bp,
+    sellPrice: sp,
+    sold: sp !== null,
+    purchaseDate: pdate,
+    saleDate: sp !== null ? today() : null,
+    completed: false,
+    rating: 0,
+    createdAt: new Date().toISOString(),
+  };
+  items = [newItem, ...items];
+  saveItems(items);
+
+  document.getElementById('f-name').value='';
+  document.getElementById('f-brand').value='';
+  document.getElementById('f-size').value='';
+  document.getElementById('f-buy').value='';
+  document.getElementById('f-sell').value='';
+  document.getElementById('f-pdate').value = today();
+  document.getElementById('livePreview').innerHTML = '';
+
+  renderAll();
+});
+
+initFormOptions();
+renderAll();
+</script>
+</body>
+</html>
